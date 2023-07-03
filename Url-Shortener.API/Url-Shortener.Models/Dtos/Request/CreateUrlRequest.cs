@@ -2,7 +2,7 @@
 
 namespace Url_Shortener.Models.Dtos.Request
 {
-    public class UrlRequest
+    public class CreateUrlRequest
     {
         [Required]
         public string Url { get; set; }
