@@ -1,11 +1,14 @@
-﻿namespace Url_Shortener.Models.Entities
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace Url_Shortener.Models.Entities
 {
     public class Url
     {
+        [Key]
         public string Id { get; set; }
         public string ShortUrl { get; set; }
         public string LongUrl { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.Now;
-        public DateTime UpdatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; } = DateTime.Now;
     }
 }

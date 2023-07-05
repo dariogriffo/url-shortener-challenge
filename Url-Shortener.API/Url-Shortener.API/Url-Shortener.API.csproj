@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Url_Shortener.API</RootNamespace>
+    <UserSecretsId>9237546b-fae9-4578-9671-a2a5311fd73a</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,10 +19,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Url-Shortener.Services\Url-Shortener.Services.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Controllers\" />
   </ItemGroup>
 
 </Project>
