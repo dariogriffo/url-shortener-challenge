@@ -20,6 +20,14 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.AddRedirect();
+
+/*Task HandleRedirect(HttpContext context)
+{
+    context.Response.Redirect("https://google.com");
+    return Task.CompletedTask;
+}*/
+
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
