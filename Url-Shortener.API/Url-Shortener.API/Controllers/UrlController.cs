@@ -15,10 +15,18 @@ namespace Url_Shortener.API.Controllers
             _urlService = urlService;
         }
 
-        [HttpPost(Name = "Create short url")]
+        [HttpPost("create-short-url", Name = "Create new short url")]
         public async Task<IActionResult> Create([FromBody] CreateUrlRequest url)
         {
-            var response = await _urlService.Create(url);
+            var response = await _urlService.Create(url, HttpContext);
+            return Ok(response);
+        }
+
+        [HttpGet("get-full-url", Name = "Get complete url")]
+        public async Task<IActionResult> Get(string url)
+        {
+            //var path = HttpContext.Request.Path.ToUriComponent().Trim('/');
+            var response = await _urlService.Get(url);
             return Ok(response);
         }
     }
