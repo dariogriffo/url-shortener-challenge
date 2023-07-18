@@ -1,4 +1,7 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Text;
+using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.WebUtilities;
 using Url_Shortener.Data.Repository.Interfaces;
 using Url_Shortener.Models.Dtos.Request;
 using Url_Shortener.Models.Dtos.Response;
@@ -24,24 +27,24 @@ namespace Url_Shortener.Services.Implementations
             TimeSpan.FromMilliseconds(1)
         );
 
-        public async Task<Url> Create(CreateUrlRequest url)
+        public async Task<UrlResponse> Create(CreateUrlRequest url, HttpContext httpContext)
         {
             if (!IsValidUrl(url.Url, out Uri? uri))
                 throw new ArgumentException(@$"Invalid URL! Failed to shorten URL: {url.Url}. 
                 Url can only contain alphanumeric characters, underscores, and dashes.");
-
             Url newUrl = new Url
             {
-                Id = Guid.NewGuid().ToString(),
-                LongUrl = uri.ToString(),
-                ShortUrl = url.Url,
+                LongUrl = uri!.ToString(),
             };
 
             var result = await _urlManager.AddAsync(newUrl);
             if (result is null)
                 throw new ArgumentNullException($"Sorry, Unable to create your short url with: {url.Url}");
-
-            return result;
+          
+            return new UrlResponse
+            {
+                Url = $"{httpContext.Request.Scheme}://{httpContext.Request.Host}/{Encode(newUrl.Id)}",
+            };
         }
 
         public Task Delete(string urlId)
@@ -49,9 +52,21 @@ namespace Url_Shortener.Services.Implementations
             throw new NotImplementedException();
         }
 
-        public Task<UrlResponse> Get(string url)
+        public async Task<UrlResponse> Get(string url)
         {
-            throw new NotImplementedException();
+            if (url is null)
+                throw new ArgumentNullException();
+            var urlCollection = url.Split('/');
+            var path = urlCollection[urlCollection.Length - 1];
+
+            int urlId = Decode(path);
+
+            var result =  _urlManager.GetById(urlId);
+
+            return new UrlResponse
+            {
+                Url = result.LongUrl
+            };
         }
 
         public Task<IEnumerable<UrlResponse>> GetAll()
@@ -83,6 +98,16 @@ namespace Url_Shortener.Services.Implementations
             }
 
             return true;
+        }
+
+        private string Encode(int Id)
+        {
+            return WebEncoders.Base64UrlEncode(BitConverter.GetBytes(Id));
+        }
+
+        private int Decode(string code)
+        {
+            return BitConverter.ToInt32(WebEncoders.Base64UrlDecode(code));
         }
     }
 }
