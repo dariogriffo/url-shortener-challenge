@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.WebUtilities;
+﻿using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Url_Shortener.Data.Context;
 using Url_Shortener.Data.Repository.Implementations;
@@ -29,13 +29,23 @@ namespace Url_Shortener.API.Extensions
         {
             app.MapFallback(async context =>
             {
-                var path = context.Request.Path.ToUriComponent().Trim('/');
-                ApplicationDbContext db = app.Services.CreateScope().ServiceProvider
-                    .GetRequiredService<ApplicationDbContext>();
+                string url = context.Request.GetDisplayUrl();
                 
-                int UrlId = BitConverter.ToInt32(WebEncoders.Base64UrlDecode(path));
+                var db = app.Services.CreateScope().ServiceProvider
+                    .GetRequiredService<ApplicationDbContext>();
 
-                Url result = db.Urls.First(x => x.Id == UrlId);
+                var urlService = app.Services.CreateScope().ServiceProvider
+                    .GetRequiredService<IUrlService>();
+
+                var urlId = urlService.Decode(url);
+
+                if (urlId == 0)
+                {
+                    context.Response.Redirect(url);
+                    return;
+                }
+
+                Url result = db.Urls.First(x => x.Id.Equals(urlId));
                 if (result == null)
                     throw new ArgumentNullException();
 

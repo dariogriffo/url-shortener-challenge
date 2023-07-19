@@ -1,4 +1,5 @@
 using Url_Shortener.API.Extensions;
+using Url_Shortener.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
