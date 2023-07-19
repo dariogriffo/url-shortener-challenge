@@ -12,5 +12,6 @@ namespace Url_Shortener.Services.Interfaces
         Task<UrlResponse> Get(string url);
         Task Update(string urlId);
         Task<IEnumerable<UrlResponse>> GetAll();
+        int Decode(string path);
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System;
+using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.WebUtilities;
@@ -56,12 +57,13 @@ namespace Url_Shortener.Services.Implementations
         {
             if (url is null)
                 throw new ArgumentNullException();
-            var urlCollection = url.Split('/');
-            var path = urlCollection[urlCollection.Length - 1];
 
-            int urlId = Decode(path);
+            int urlId = Decode(url);
 
             var result =  _urlManager.GetById(urlId);
+
+            if (result is null)
+                throw new ArgumentNullException();
 
             return new UrlResponse
             {
@@ -105,9 +107,14 @@ namespace Url_Shortener.Services.Implementations
             return WebEncoders.Base64UrlEncode(BitConverter.GetBytes(Id));
         }
 
-        private int Decode(string code)
+        public int Decode(string url)
         {
-            return BitConverter.ToInt32(WebEncoders.Base64UrlDecode(code));
+            const int PATHLENGTH = 6;
+            const int DEFAULTVALUE = 0;
+
+            var urlCollection = url.Split('/');
+            var path = urlCollection[urlCollection.Length - 1];
+            return path.Length == PATHLENGTH ? BitConverter.ToInt32(WebEncoders.Base64UrlDecode(path)) : DEFAULTVALUE;
         }
     }
 }
