@@ -21,7 +21,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.AddRedirect();
+await app.AddRedirect();
 
 /*Task HandleRedirect(HttpContext context)
 {
