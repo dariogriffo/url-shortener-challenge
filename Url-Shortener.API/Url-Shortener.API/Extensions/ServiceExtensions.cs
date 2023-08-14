@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Url_Shortener.Data.Context;
 using Url_Shortener.Data.Repository.Implementations;
 using Url_Shortener.Data.Repository.Interfaces;
-using Url_Shortener.Models.Entities;
+using Url_Shortener.Models.Dtos.Response;
 using Url_Shortener.Services.Implementations;
 using Url_Shortener.Services.Interfaces;
 
@@ -25,31 +25,19 @@ namespace Url_Shortener.API.Extensions
             return services;
         }
 
-        public static void AddRedirect(this WebApplication app)
+        public static async Task AddRedirect(this WebApplication app)
         {
             app.MapFallback(async context =>
             {
                 string url = context.Request.GetDisplayUrl();
-                
-                var db = app.Services.CreateScope().ServiceProvider
-                    .GetRequiredService<ApplicationDbContext>();
 
-                var urlService = app.Services.CreateScope().ServiceProvider
-                    .GetRequiredService<IUrlService>();
+                UrlResponse? result = await app.Services.CreateScope()
+                    .ServiceProvider.GetRequiredService<IUrlService>().Get(url);
 
-                var urlId = urlService.Decode(url);
-
-                if (urlId == 0)
-                {
-                    context.Response.Redirect(url);
-                    return;
-                }
-
-                Url result = db.Urls.First(x => x.Id.Equals(urlId));
                 if (result == null)
-                    throw new ArgumentNullException();
+                    context.Response.Redirect(url);
 
-                context.Response.Redirect(result!.LongUrl);
+                context.Response.Redirect(result.Url);
             });
         }
     }
