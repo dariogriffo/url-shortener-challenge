@@ -2,6 +2,6 @@
 {
     public class UrlResponse
     {
-        public string Url { get; set; }
+        public string? Url { get; set; }
     }
 }

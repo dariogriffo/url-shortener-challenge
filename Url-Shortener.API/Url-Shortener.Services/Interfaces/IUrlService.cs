@@ -7,11 +7,10 @@ namespace Url_Shortener.Services.Interfaces
 {
     public interface IUrlService
     {
-        Task<UrlResponse> Create(CreateUrlRequest url, HttpContext httpContext);
+        Task<UrlResponse> Create(CreateUrlRequest url, HttpRequest httpRequest);
         Task Delete(string urlId);
         Task<UrlResponse> Get(string url);
         Task Update(string urlId);
         Task<IEnumerable<UrlResponse>> GetAll();
-        int Decode(string path);
     }
 }

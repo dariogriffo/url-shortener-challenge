@@ -1,8 +1,5 @@
-﻿using System;
-using System.Text;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.WebUtilities;
 using Url_Shortener.Data.Repository.Interfaces;
 using Url_Shortener.Models.Dtos.Request;
 using Url_Shortener.Models.Dtos.Response;
@@ -28,23 +25,33 @@ namespace Url_Shortener.Services.Implementations
             TimeSpan.FromMilliseconds(1)
         );
 
-        public async Task<UrlResponse> Create(CreateUrlRequest url, HttpContext httpContext)
+        /// <summary>
+        /// Create a short <see cref="Url"/> from the <see cref="CreateUrlRequest"/> parameter
+        /// </summary>
+        /// <returns>A short string variant of <see cref="Url"/></returns>
+        public async Task<UrlResponse> Create(CreateUrlRequest url, HttpRequest httpRequest)
         {
+            const string characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            const int codeLength = 6;
+            string shorturl = $"{httpRequest.Scheme}://{httpRequest.Host}/{GenerateCode(characters, codeLength)}";
+
             if (!IsValidUrl(url.Url, out Uri? uri))
                 throw new ArgumentException(@$"Invalid URL! Failed to shorten URL: {url.Url}. 
                 Url can only contain alphanumeric characters, underscores, and dashes.");
+
             Url newUrl = new Url
             {
                 LongUrl = uri!.ToString(),
+                ShortUrl = shorturl
             };
 
             var result = await _urlManager.AddAsync(newUrl);
             if (result is null)
                 throw new ArgumentNullException($"Sorry, Unable to create your short url with: {url.Url}");
-          
+
             return new UrlResponse
             {
-                Url = $"{httpContext.Request.Scheme}://{httpContext.Request.Host}/{Encode(newUrl.Id)}",
+                Url = shorturl,
             };
         }
 
@@ -53,17 +60,15 @@ namespace Url_Shortener.Services.Implementations
             throw new NotImplementedException();
         }
 
-        public async Task<UrlResponse> Get(string url)
+        public async Task<UrlResponse?> Get(string shorturl)
         {
-            if (url is null)
+            if (shorturl is null)
                 throw new ArgumentNullException();
 
-            int urlId = Decode(url);
-
-            var result =  _urlManager.GetById(urlId);
+            var result = await _urlManager.GetSingleByAsync(x => x.ShortUrl == shorturl);
 
             if (result is null)
-                throw new ArgumentNullException();
+                return new UrlResponse();
 
             return new UrlResponse
             {
@@ -81,6 +86,12 @@ namespace Url_Shortener.Services.Implementations
             throw new NotImplementedException();
         }
 
+        private string GenerateCode(string chars, int length)
+        {
+            return new string(Enumerable.Repeat(chars, length)
+                .Select(x => x[Random.Shared.Next(x.Length)]).ToArray());
+        }
+
         private bool IsValidUrl(string url, out Uri? absoluteUri)
         {
             if (!WebsiteLinkRegex.IsMatch(url))
@@ -88,7 +99,7 @@ namespace Url_Shortener.Services.Implementations
                 absoluteUri = null;
                 return false;
             }
-                
+
             if (!Uri.TryCreate(url, UriKind.Absolute, out absoluteUri))
             {
                 string baseUrl = "https://";
@@ -100,21 +111,6 @@ namespace Url_Shortener.Services.Implementations
             }
 
             return true;
-        }
-
-        private string Encode(int Id)
-        {
-            return WebEncoders.Base64UrlEncode(BitConverter.GetBytes(Id));
-        }
-
-        public int Decode(string url)
-        {
-            const int PATHLENGTH = 6;
-            const int DEFAULTVALUE = 0;
-
-            var urlCollection = url.Split('/');
-            var path = urlCollection[urlCollection.Length - 1];
-            return path.Length == PATHLENGTH ? BitConverter.ToInt32(WebEncoders.Base64UrlDecode(path)) : DEFAULTVALUE;
         }
     }
 }
